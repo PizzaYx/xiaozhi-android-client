@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/status.dart' as status;
 // 尝试导入io.dart，但在web平台会抛出异常
 import 'package:web_socket_channel/io.dart'
     if (dart.library.html) 'package:web_socket_channel/html.dart';
+import 'package:ai_assistant/models/xiaozhi_config.dart';
 
 /// 小智WebSocket事件类型
 enum XiaozhiEventType { connected, disconnected, message, error, binaryMessage }
@@ -30,6 +32,7 @@ class XiaozhiWebSocketManager {
   String? _deviceId;
   String? _token;
   bool _enableToken;
+  XiaozhiConfig? _config;
 
   final List<XiaozhiWebSocketListener> _listeners = [];
   bool _isReconnecting = false;
@@ -61,7 +64,94 @@ class XiaozhiWebSocketManager {
   }
 
   /// 连接到WebSocket服务器
-  Future<void> connect(String url, String token) async {
+  Future<void> connect(XiaozhiConfig config) async {
+    _config = config;
+    _token = config.token;
+
+    // 如果有OTA地址，则先从OTA获取实际的WebSocket地址
+    if (config.otaUrl != null && config.otaUrl!.isNotEmpty) {
+      try {
+        print('$TAG: 正在从OTA地址获取WebSocket URL: ${config.otaUrl}');
+
+        final otaBody = {
+          "version": 0,
+          "uuid": "",
+          "application": {
+            "name": "xiaozhi-flutter-client",
+            "version": "2.0.0",
+            "compile_time": DateTime.now().toIso8601String(),
+            "idf_version": "N/A",
+            "elf_sha256": ""
+          },
+          "ota": {"label": "xiaozhi-flutter-client"},
+          "board": {
+            "type": "xiaozhi-flutter-client",
+            "ssid": "",
+            "rssi": 0,
+            "channel": 0,
+            "ip": "",
+            "mac": config.macAddress
+          },
+          "flash_size": 0,
+          "minimum_free_heap_size": 0,
+          "mac_address": config.macAddress,
+          "chip_model_name": "",
+          "chip_info": {
+            "model": 0,
+            "cores": 0,
+            "revision": 0,
+            "features": 0
+          },
+          "partition_table": [
+            {"label": "", "type": 0, "subtype": 0, "address": 0, "size": 0}
+          ]
+        };
+
+        final response = await http.post(
+          Uri.parse(config.otaUrl!),
+          headers: {
+            'Content-Type': 'application/json; charset=UTF-8',
+            'Device-Id': _deviceId ?? '',
+            'Client-Id': _deviceId ?? '',
+          },
+          body: jsonEncode(otaBody),
+        );
+
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          final websocketData = data['websocket'];
+          if (websocketData != null && websocketData['url'] != null) {
+            final wsUrl = websocketData['url'];
+            print('$TAG: 从OTA成功获取WebSocket URL: $wsUrl');
+            await _establishConnection(wsUrl, config.token);
+            return;
+          } else {
+            final errorMsg = 'OTA响应中未找到 "websocket.url"';
+            print('$TAG: $errorMsg');
+            _dispatchEvent(
+                XiaozhiEvent(type: XiaozhiEventType.error, data: errorMsg));
+          }
+        } else {
+          final errorMsg =
+              '从OTA获取配置失败，状态码: ${response.statusCode}, 内容: ${response.body}';
+          print('$TAG: $errorMsg');
+          _dispatchEvent(
+              XiaozhiEvent(type: XiaozhiEventType.error, data: errorMsg));
+        }
+      } catch (e) {
+        final errorMsg = '请求OTA地址时发生错误: $e';
+        print('$TAG: $errorMsg');
+        _dispatchEvent(
+            XiaozhiEvent(type: XiaozhiEventType.error, data: errorMsg));
+      }
+    } else {
+      // 如果没有OTA地址，直接使用配置中的WebSocket地址
+      print('$TAG: 未配置OTA地址，直接使用WebSocket地址: ${config.websocketUrl}');
+      await _establishConnection(config.websocketUrl, config.token);
+    }
+  }
+
+  Future<void> _establishConnection(String url, String token) async {
     if (url.isEmpty) {
       _dispatchEvent(
         XiaozhiEvent(type: XiaozhiEventType.error, data: "WebSocket地址不能为空"),
@@ -71,7 +161,6 @@ class XiaozhiWebSocketManager {
 
     // 保存连接参数
     _serverUrl = url;
-    _token = token;
 
     // 如果已连接，先断开
     if (_channel != null) {
@@ -282,7 +371,7 @@ class XiaozhiWebSocketManager {
         () {
           _isReconnecting = false;
           if (_serverUrl != null && _token != null) {
-            connect(_serverUrl!, _token!);
+            connect(_config!);
           }
         },
       );

@@ -78,18 +78,23 @@ class ConfigProvider extends ChangeNotifier {
 
   Future<void> addXiaozhiConfig(
     String name,
-    String websocketUrl, {
-    String? customMacAddress,
-  }) async {
-    // 如果提供了自定义MAC地址，直接使用；否则使用设备ID生成
-    final macAddress = customMacAddress ?? await _getDeviceMacAddress();
+    String websocketUrl,
+    String token,
+    String macAddress,
+    String? otaUrl,
+  ) async {
+    String finalMacAddress = macAddress;
+    if (finalMacAddress.isEmpty) {
+      finalMacAddress = await _getDeviceMacAddress();
+    }
 
     final newConfig = XiaozhiConfig(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       name: name,
       websocketUrl: websocketUrl,
-      macAddress: macAddress,
-      token: 'test-token',
+      macAddress: finalMacAddress,
+      token: token.isEmpty ? 'test-token' : token,
+      otaUrl: otaUrl,
     );
 
     _xiaozhiConfigs.add(newConfig);

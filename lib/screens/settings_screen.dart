@@ -1370,6 +1370,7 @@ class _SettingsScreenState extends State<SettingsScreen>
     final websocketUrlController = TextEditingController();
     final tokenController = TextEditingController();
     final macAddressController = TextEditingController();
+    final otaUrlController = TextEditingController();
 
     showDialog(
       context: context,
@@ -1507,36 +1508,23 @@ class _SettingsScreenState extends State<SettingsScreen>
                       ),
                     ),
                     const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'MAC地址 (可选)',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
+                    const Text(
+                      'MAC地址',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Container(
                       decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
+                        color: const Color(0xFFF5F5F5),
+                        borderRadius: BorderRadius.circular(8),
                         border: Border.all(color: Colors.grey.shade300),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.03),
-                            blurRadius: 4,
-                            spreadRadius: 0,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
                       ),
                       child: TextField(
-                        enabled: true,
                         controller: macAddressController,
+                        enabled: true,
                         decoration: InputDecoration(
                           hintText: '留空将自动生成',
                           hintStyle: TextStyle(color: Colors.grey.shade400),
@@ -1554,31 +1542,12 @@ class _SettingsScreenState extends State<SettingsScreen>
                       style: TextStyle(color: Colors.grey, fontSize: 12),
                     ),
                     const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Token',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade100,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Text(
-                            '默认开启',
-                            style: TextStyle(color: Colors.grey, fontSize: 14),
-                          ),
-                        ),
-                      ],
+                    const Text(
+                      'Token',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Container(
@@ -1606,13 +1575,50 @@ class _SettingsScreenState extends State<SettingsScreen>
                         ),
                       ),
                     ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'OTA 地址 (可选)',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey.shade300),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.03),
+                            blurRadius: 4,
+                            spreadRadius: 0,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: TextField(
+                        controller: otaUrlController,
+                        decoration: InputDecoration(
+                          hintText: '例如：http://192.168.1.10:8022',
+                          hintStyle: TextStyle(color: Colors.grey.shade400),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 14,
+                          ),
+                          border: InputBorder.none,
+                        ),
+                      ),
+                    ),
                     const SizedBox(height: 24),
                     ElevatedButton(
                       onPressed: () {
                         final name = nameController.text.trim();
                         final websocketUrl = websocketUrlController.text.trim();
-                        final macAddress = macAddressController.text.trim();
                         final token = tokenController.text.trim();
+                        final macAddress = macAddressController.text.trim();
+                        final otaUrl = otaUrlController.text.trim();
 
                         if (name.isEmpty || websocketUrl.isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -1635,8 +1641,9 @@ class _SettingsScreenState extends State<SettingsScreen>
                         ).addXiaozhiConfig(
                           name,
                           websocketUrl,
-                          customMacAddress:
-                              macAddress.isNotEmpty ? macAddress : null,
+                          token,
+                          macAddress,
+                          otaUrl,
                         );
 
                         Navigator.pop(context);
@@ -1699,11 +1706,12 @@ class _SettingsScreenState extends State<SettingsScreen>
 
   void _showEditXiaozhiConfigDialog(XiaozhiConfig config) {
     final nameController = TextEditingController(text: config.name);
-    final websocketUrlController = TextEditingController(
-      text: config.websocketUrl,
-    );
-    final macAddressController = TextEditingController(text: config.macAddress);
+    final websocketUrlController =
+        TextEditingController(text: config.websocketUrl);
     final tokenController = TextEditingController(text: config.token);
+    final macAddressController =
+        TextEditingController(text: config.macAddress);
+    final otaUrlController = TextEditingController(text: config.otaUrl);
 
     showDialog(
       context: context,
@@ -1862,31 +1870,12 @@ class _SettingsScreenState extends State<SettingsScreen>
                       style: TextStyle(color: Colors.grey, fontSize: 12),
                     ),
                     const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Token',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade100,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Text(
-                            '默认开启',
-                            style: TextStyle(color: Colors.grey, fontSize: 14),
-                          ),
-                        ),
-                      ],
+                    const Text(
+                      'Token',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Container(
@@ -1914,13 +1903,50 @@ class _SettingsScreenState extends State<SettingsScreen>
                         ),
                       ),
                     ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'OTA 地址 (可选)',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey.shade300),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.03),
+                            blurRadius: 4,
+                            spreadRadius: 0,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: TextField(
+                        controller: otaUrlController,
+                        decoration: InputDecoration(
+                          hintText: '例如：http://192.168.1.10:8022',
+                          hintStyle: TextStyle(color: Colors.grey.shade400),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 14,
+                          ),
+                          border: InputBorder.none,
+                        ),
+                      ),
+                    ),
                     const SizedBox(height: 24),
                     ElevatedButton(
                       onPressed: () {
                         final name = nameController.text.trim();
                         final websocketUrl = websocketUrlController.text.trim();
-                        final macAddress = macAddressController.text.trim();
                         final token = tokenController.text.trim();
+                        final macAddress = macAddressController.text.trim();
+                        final otaUrl = otaUrlController.text.trim();
 
                         if (name.isEmpty || websocketUrl.isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -1940,11 +1966,12 @@ class _SettingsScreenState extends State<SettingsScreen>
                         final updatedConfig = config.copyWith(
                           name: name,
                           websocketUrl: websocketUrl,
+                          token: token,
                           macAddress:
                               macAddress.isNotEmpty
                                   ? macAddress
                                   : config.macAddress,
-                          token: token.isNotEmpty ? token : config.token,
+                          otaUrl: otaUrl.isNotEmpty ? otaUrl : config.otaUrl,
                         );
 
                         Provider.of<ConfigProvider>(

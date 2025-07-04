@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_sound/flutter_sound.dart';
+import '../models/xiaozhi_config.dart';
 import '../services/xiaozhi_websocket_manager.dart';
 import '../utils/device_util.dart';
 import '../utils/audio_util.dart';
@@ -41,12 +42,7 @@ class XiaozhiService {
   static const String TAG = "XiaozhiService";
   static const String DEFAULT_SERVER = "wss://ws.xiaozhi.ai";
 
-  // 单例实例
-  static XiaozhiService? _instance;
-
-  final String websocketUrl;
-  final String macAddress;
-  final String token;
+  final XiaozhiConfig config;
   String? _sessionId; // 会话ID将由服务器提供
 
   XiaozhiWebSocketManager? _webSocketManager;
@@ -59,35 +55,10 @@ class XiaozhiService {
   bool _hasStartedCall = false;
   MessageListener? _messageListener;
 
-  /// 工厂构造函数，实现单例模式
-  factory XiaozhiService({
-    required String websocketUrl,
-    required String macAddress,
-    required String token,
-    String? sessionId,
-  }) {
-    _instance ??= XiaozhiService._internal(
-      websocketUrl: websocketUrl,
-      macAddress: macAddress,
-      token: token,
-      sessionId: sessionId,
-    );
-    return _instance!;
-  }
-
-  /// 内部构造函数
-  XiaozhiService._internal({
-    required this.websocketUrl,
-    required this.macAddress,
-    required this.token,
-    String? sessionId,
-  }) {
+  XiaozhiService({required this.config, String? sessionId}) {
     _sessionId = sessionId;
     _init();
   }
-
-  /// 获取实例
-  static XiaozhiService? get instance => _instance;
 
   /// 切换到语音通话模式
   Future<void> switchToVoiceCallMode() async {
@@ -135,11 +106,11 @@ class XiaozhiService {
   /// 初始化
   Future<void> _init() async {
     // 使用配置中的MAC地址作为设备ID
-    print('$TAG: 初始化完成，使用MAC地址作为设备ID: $macAddress');
+    print('$TAG: 初始化完成，使用MAC地址作为设备ID: ${config.macAddress}');
 
     // 初始化WebSocket管理器，启用 token
     _webSocketManager = XiaozhiWebSocketManager(
-      deviceId: macAddress,
+      deviceId: config.macAddress,
       enableToken: true,
     );
 
@@ -184,7 +155,7 @@ class XiaozhiService {
 
       // 创建WebSocket管理器
       _webSocketManager = XiaozhiWebSocketManager(
-        deviceId: macAddress,
+        deviceId: config.macAddress,
         enableToken: true,
       );
 
@@ -192,7 +163,7 @@ class XiaozhiService {
       _webSocketManager!.addListener(_onWebSocketEvent);
 
       // 连接WebSocket
-      await _webSocketManager!.connect(websocketUrl, token);
+      await _webSocketManager!.connect(config);
     } catch (e) {
       print('$TAG: 连接失败: $e');
       _dispatchEvent(
@@ -313,18 +284,18 @@ class XiaozhiService {
       await AudioUtil.initRecorder();
       await AudioUtil.initPlayer();
 
-      print('$TAG: 正在连接 $websocketUrl');
-      print('$TAG: 设备ID: $macAddress');
+      print('$TAG: 正在连接 $config.websocketUrl');
+      print('$TAG: 设备ID: $config.macAddress');
       print('$TAG: Token启用: true');
-      print('$TAG: 使用Token: $token');
+      print('$TAG: 使用Token: $config.token');
 
       // 使用 WebSocketManager 连接
       _webSocketManager = XiaozhiWebSocketManager(
-        deviceId: macAddress,
+        deviceId: config.macAddress,
         enableToken: true,
       );
       _webSocketManager!.addListener(_onWebSocketEvent);
-      await _webSocketManager!.connect(websocketUrl, token);
+      await _webSocketManager!.connect(config);
     } catch (e) {
       print('$TAG: 连接失败: $e');
       rethrow;
@@ -806,4 +777,9 @@ class XiaozhiService {
 
   /// 判断是否正在说话
   bool get _isSpeaking => _audioStreamSubscription != null;
+
+  void _handleBinaryMessage(List<int> data) {
+    AudioUtil.playOpusData(Uint8List.fromList(data));
+    _dispatchEvent(XiaozhiServiceEvent(XiaozhiServiceEventType.audioData, data));
+  }
 }

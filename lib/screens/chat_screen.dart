@@ -174,11 +174,7 @@ class _ChatScreenState extends State<ChatScreen> {
       (config) => config.id == widget.conversation.configId,
     );
 
-    _xiaozhiService = XiaozhiService(
-      websocketUrl: xiaozhiConfig.websocketUrl,
-      macAddress: xiaozhiConfig.macAddress,
-      token: xiaozhiConfig.token,
-    );
+    _xiaozhiService = XiaozhiService(config: xiaozhiConfig);
 
     // 添加消息监听器
     _xiaozhiService!.addListener(_handleXiaozhiMessage);
