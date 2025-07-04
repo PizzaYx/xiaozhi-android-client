@@ -49,7 +49,7 @@
 
 # 近期服务器受到大量渗透攻击，暂停开放社区APK版本，有人不讲武德，那就只能这样了。
 
-## 功能特点（部分功能未在社区版实现）
+## 功能特点（部分功能未在社区版实现，可提供商业版）
 
 - **跨平台支持**：使用Flutter框架，一套代码支持多平台
 - **多AI模型支持**：
@@ -82,50 +82,12 @@
   - 支持Qwen3模型开关思考模式
   - 支持HTML代码预览
 
-## 安装与构建
 
-1. 克隆项目:
-```bash
-git clone https://github.com/TOM88812/xiaozhi-android-client.git
-```
+## 支持的服务商
 
-2. 安装依赖:
-```bash
-flutter pub get
-```
-
-3. 运行应用:
-```bash
-flutter run
-```
-
-4. 构建发布版本:
-```bash
-# Android
-flutter build apk --release
-
-# iOS
-flutter build ios --release
-```
-
-## 配置说明
-
-### 小智服务配置
 - 支持配置多个小智服务地址
-- OTA URL设置
-- Token认证
-- 自定义MAC
-- wss地址自动获取
-
-### Dify API配置
 - 支持配置多个Dify服务
-- API密钥管理
-- 服务器URL配置
-
-### OpenAI 服务
-- 支持OpenAI接口
-- 支持自定义模型
-- 温度等配置
+- 支持多个OpenAI服务
 
 ## 开发计划
 - [x] 深色/浅色主题适配
@@ -133,18 +95,19 @@ flutter build ios --release
 - [x] 增强语音识别准确性
 - [x] 支持OTA自动注册设备
 - [x] 支持语音实时打断
-- [x] 支持Qwen3模型开关思考模式
+- [x] 支持思考模式
 - [x] 支持HTML代码预览
 - [x] live2d 多模型自由切换
   - 内置两个live2d官方免费下载模型
   - live2d 自由导入
+  - 口型同步
 - [x] 支持iot功能
 - [x] 支持视觉
 - [x] 创新性心情模式
-- [ ] 集成MIot 控制米家设备
 - [ ] 支持TTS
-- [ ] 支持MCP_Client
-- [ ] 支持OpenAI接口联网搜索🔍
+- [x] 支持MCP_Client
+- [x] 支持OpenAI接口联网搜索🔍
+- [x] 支持视频播放▶️
 
 ## 联系方式
 
